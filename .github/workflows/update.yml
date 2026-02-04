@@ -34,7 +34,7 @@ jobs:
           echo "Downloading mobile.txt..."
           curl -fsSL -o mobile/xisohi.txt https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/Unicast/henan/mobile.txt || { echo "Failed to download mobile.txt"; exit 1; }
           echo "Downloading hndx.m3u..."
-          curl -fsSL -o telecom/kodi.m3u https://raw.githubusercontent.com/agaj01/My-old-site-in-2005/main/zrkx/hndx.m3u || { echo "Failed to download hndx.m3u"; exit 1; }
+          curl -fsSL -o telecom/kodi.m3u https://raw.githubusercontent.com/agaj01/My-old-site-in-2005/master/zrkx/hndx.m3u || { echo "Failed to download hndx.m3u"; exit 1; }
           git status --porcelain || true
 
       - name: Commit and push if changed
