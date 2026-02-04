@@ -1,43 +1,51 @@
+name: Sync ott files
 
-name: Sync Files Across Repositories
 on:
   schedule:
-    # 每天凌晨2点执行
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * *'    # 每日 02:00 UTC，按需修改
   workflow_dispatch:
 
+# 确保 workflow 有写仓库内容的权限
+permissions:
+  contents: write
+
 jobs:
-  sync-files:
+  sync:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          persist-credentials: true  # 允许后续 git push 使用 GITHUB_TOKEN
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: |
-          npm install @actions/core
-          npm install @actions/github
+      - name: Ensure directory exists
+        run: mkdir -p telecom mobile
 
-      - name: Sync files from multiple repositories
+      - name: Download external ott files
         run: |
-          # 克隆源仓库
-          git clone https://github.com/wind005/TVlive.git /tmp/wind005
-          git clone https://github.com/lizanyang3/lizanyang3.github.io.git /tmp/lizanyang3
-          
-          # 复制文件到目标仓库
-          cp /tmp/wind005/m3u/henyd.m3u /target/henyd.m3u
-          cp /tmp/source2/hn.m3u /target/hn.m3u
-          
-          # 提交更改
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git commit -m "Update files from source repositories" || echo "No changes to commit"
-          git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          set -euo pipefail
+          echo "Downloading henyd.m3u..."
+          curl -fsSL -o mobile/wind005.m3u https://raw.githubusercontent.com/wind005/TVlive/main/m3u/henyd.m3u || { echo "Failed to download henyd.m3u"; exit 1; }
+          echo "Downloading hendx.m3u..."
+          curl -fsSL -o telecom/wind005.m3u https://raw.githubusercontent.com/wind005/TVlive/main/m3u/hendx.m3u || { echo "Failed to download hendx.m3u"; exit 1; }
+          echo "Downloading hn.m3u..."
+          curl -fsSL -o mobile/lizanyang3.m3u https://raw.githubusercontent.com/lizanyang3/lizanyang3.github.io/main/hn.m3u || { echo "Failed to download hn.m3u"; exit 1; }
+          echo "Downloading mobile.txt..."
+          curl -fsSL -o mobile/xisohi.txt https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/Unicast/henan/mobile.txt || { echo "Failed to download mobile.txt"; exit 1; }
+          echo "Downloading hndx.m3u..."
+          curl -fsSL -o telecom/kodi.m3u https://raw.githubusercontent.com/agaj01/My-old-site-in-2005/main/zrkx/hndx.m3u || { echo "Failed to download hndx.m3u"; exit 1; }
+          git status --porcelain || true
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "chore: sync ott files from external repos"
+            git push
+          else
+            echo "No changes to commit."
+          fi
