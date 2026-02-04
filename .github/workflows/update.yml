@@ -30,8 +30,8 @@ jobs:
           git clone https://github.com/lizanyang3/lizanyang3.github.io.git /tmp/lizanyang3
           
           # 复制文件到目标仓库
-          cp /tmp/wind005/m3u/henyd.m3u ./target/henyd.m3u
-          cp /tmp/source2/hn.m3u ./target/hn.m3u
+          cp /tmp/wind005/m3u/henyd.m3u /target/henyd.m3u
+          cp /tmp/source2/hn.m3u /target/hn.m3u
           
           # 提交更改
           git config --global user.name 'github-actions[bot]'
