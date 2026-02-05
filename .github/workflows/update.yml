@@ -25,14 +25,26 @@ jobs:
       - name: Download external ott files
         run: |
           set -euo pipefail
-          echo "Downloading henyd.m3u..."
-          curl -fsSL -o mobile/wind005.m3u https://raw.githubusercontent.com/wind005/TVlive/main/m3u/henyd.m3u || { echo "Failed to download henyd.m3u"; exit 1; }
-          echo "Downloading hendx.m3u..."
-          curl -fsSL -o telecom/wind005.m3u https://raw.githubusercontent.com/wind005/TVlive/main/m3u/hendx.m3u || { echo "Failed to download hendx.m3u"; exit 1; }
-          echo "Downloading hn.m3u..."
-          curl -fsSL -o mobile/lizanyang3.m3u https://raw.githubusercontent.com/lizanyang3/lizanyang3.github.io/main/hn.m3u || { echo "Failed to download hn.m3u"; exit 1; }
-          echo "Downloading mobile.txt..."
-          curl -fsSL -o mobile/xisohi.txt https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/Unicast/henan/mobile.txt || { echo "Failed to download mobile.txt"; exit 1; }
+
+          # Helper to download a file but skip on failure
+          download() {
+            local url="$1"
+            local out="$2"
+            local label="$3"
+            echo "Downloading ${label} from ${url} ..."
+            # add --retry and --retry-delay to improve robustness
+            if curl -fsSL --retry 2 --retry-delay 2 -o "${out}" "${url}"; then
+              echo "Downloaded ${label} -> ${out}"
+            else
+              echo "Failed to download ${label} from ${url} — skipping"
+            fi
+          }
+
+          download "https://raw.githubusercontent.com/wind005/TVlive/main/m3u/henyd.m3u" "mobile/wind005.m3u" "henyd.m3u"
+          download "https://raw.githubusercontent.com/wind005/TVlive/main/m3u/hendx.m3u" "telecom/wind005.m3u" "hendx.m3u"
+          download "https://raw.githubusercontent.com/lizanyang3/lizanyang3.github.io/main/hn.m3u" "mobile/lizanyang3.m3u" "hn.m3u"
+          download "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/Unicast/henan/mobile.txt" "mobile/xisohi.txt" "mobile.txt"
+
           git status --porcelain || true
 
       - name: Commit and push if changed
